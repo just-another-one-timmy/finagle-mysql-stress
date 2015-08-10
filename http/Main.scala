@@ -1,9 +1,11 @@
 package com.timmy.mysql.http
 
+import com.twitter.conversions.time._
 import com.twitter.app.App
 import com.twitter.finagle.exp.Mysql
 import com.twitter.finagle.exp.mysql.{Client => MysqlClient}
 import com.twitter.finagle.httpx
+import com.twitter.finagle.client.DefaultPool
 import com.twitter.finagle.{Httpx, Service}
 import com.twitter.util.{Await, Future, Promise}
 import scala.util.Random
@@ -21,6 +23,12 @@ object MysqlStress extends App {
     val mysqlClient = Mysql.client
       .withCredentials(User(), Password())
       .withDatabase(DbName())
+      .configured(DefaultPool.Param(
+        low = 0,
+        high = Concurrency(),
+        bufferSize = 0,
+        idleTime = 5 minutes,
+        maxWaiters = Int.MaxValue))
       .newRichClient(MysqlAddress())
 
     val service = new Service[httpx.Request, httpx.Response] {
